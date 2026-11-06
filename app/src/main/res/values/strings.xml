@@ -1,0 +1,4 @@
+<resources>
+ <string name="app_name">Contexto de Conversas</string>
+ <string name="accessibility_description">Mostra um botão flutuante para salvar textos copiados quando você autorizar. Não lê o conteúdo da tela.</string>
+</resources>

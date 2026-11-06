@@ -1,0 +1,50 @@
+name: Gerar APK - Contexto de Conversas
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  apk:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Baixar projeto
+        uses: actions/checkout@v4
+      - name: Configurar Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Configurar SDK Android
+        uses: android-actions/setup-android@v4
+      - name: Instalar Android 35
+        run: sdkmanager --install 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Configurar Gradle 8.7
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+      - name: Diagnosticar ambiente
+        run: |
+          java -version
+          gradle --version
+          sdkmanager --version
+          test -f app/build.gradle
+          test -f app/src/main/AndroidManifest.xml
+      - name: Compilar APK (3 tentativas para erros temporarios de rede)
+        shell: bash
+        run: |
+          for tentativa in 1 2 3; do
+            echo "Tentativa $tentativa de 3"
+            if gradle :app:assembleDebug --no-daemon --stacktrace; then
+              exit 0
+            fi
+            if [ "$tentativa" -eq 3 ]; then exit 1; fi
+            sleep $((tentativa * 30))
+          done
+      - name: Publicar APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ContextoConversas-APK
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
